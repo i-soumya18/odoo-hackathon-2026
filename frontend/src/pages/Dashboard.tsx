@@ -42,36 +42,39 @@ const ESGDonut = ({ env, soc, gov, overall }) => {
 };
 
 /* ── Score Pillar Card ───────────────────────────────────────── */
-const PillarCard = ({ title, score, icon: Icon, color, borderClass, trend }) => (
-  <div className={`card card-hover p-5 flex items-center gap-4 ${borderClass}`}>
-    <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${color}18` }}>
-      <Icon size={22} style={{ color }} />
+const PillarCard = ({ title, score, icon: Icon, color, borderClass, trend }) => {
+  const isPositive = !trend.startsWith('−') && !trend.startsWith('-');
+  return (
+    <div className={`card card-hover p-6 flex items-center gap-5 ${borderClass} h-full`}>
+      <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${color}15` }}>
+        <Icon size={24} style={{ color }} />
+      </div>
+      <div className="flex flex-col justify-center">
+        <p className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">{title}</p>
+        <div className="flex items-center gap-3">
+          <span className="text-3xl font-bold score-num text-[var(--text-primary)] leading-none">
+            <CountUp value={score} decimals={1} />
+          </span>
+          <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold px-2 py-0.5 rounded-md ${isPositive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+            <TrendingUp size={12} className={isPositive ? '' : 'rotate-180'} /> {trend}
+          </span>
+        </div>
+      </div>
     </div>
-    <div className="flex-1 min-w-0">
-      <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide mb-1">{title}</p>
-      <p className="text-2xl font-bold score-num text-[var(--text-primary)]">
-        <CountUp value={score} decimals={1} />
-      </p>
-    </div>
-    <div className="shrink-0 text-right">
-      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-green-50 text-green-700">
-        <TrendingUp size={10} /> {trend}
-      </span>
-    </div>
-  </div>
-);
+  );
+};
 
 /* ── KPI Stat ───────────────────────────────────────────────── */
 const KpiStat = ({ label, value, suffix = '', icon: Icon, iconColor, decimals = 0 }) => (
-  <div className="card p-5 flex items-center gap-4">
-    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${iconColor}18` }}>
-      <Icon size={20} style={{ color: iconColor }} />
+  <div className="card p-6 flex items-center gap-5 h-full">
+    <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${iconColor}15` }}>
+      <Icon size={24} style={{ color: iconColor }} />
     </div>
-    <div>
-      <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">{label}</p>
-      <p className="text-xl font-bold score-num text-[var(--text-primary)]">
+    <div className="flex flex-col justify-center">
+      <p className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-1">{label}</p>
+      <div className="text-2xl font-bold score-num text-[var(--text-primary)] leading-none">
         <CountUp value={value} decimals={decimals} suffix={suffix} />
-      </p>
+      </div>
     </div>
   </div>
 );
@@ -172,14 +175,14 @@ export default function Dashboard() {
       {/* ── Hero: Donut + Pillar Cards ── */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
         {/* Donut */}
-        <div className="card p-6 flex flex-col items-center justify-center gap-2 lg:col-span-1">
+        <div className="card p-6 flex flex-col items-center justify-center lg:col-span-1 h-full">
           <ESGDonut
             env={org.environmental_score}
             soc={org.social_score}
             gov={org.governance_score}
             overall={org.total_score}
           />
-          <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide text-center">Overall ESG Score</p>
+          <p className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider text-center mt-4 mb-2">OVERALL ESG SCORE</p>
           <div className="flex gap-3 text-[10px] font-semibold text-[var(--text-secondary)]">
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#2E9E5B] inline-block" />Env</span>
             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#3B82F6] inline-block" />Soc</span>
