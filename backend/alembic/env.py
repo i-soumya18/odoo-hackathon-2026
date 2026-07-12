@@ -28,6 +28,7 @@ if config.config_file_name is not None:
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from app.database import Base
+import app.models  # Register models
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
