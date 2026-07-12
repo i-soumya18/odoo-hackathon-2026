@@ -71,6 +71,16 @@ export default function Governance() {
     }
   };
 
+  const handleAcknowledge = async (id) => {
+    try {
+      await api.post(`/governance/policies/${id}/acknowledge`);
+      showToast('Policy acknowledged successfully', 'success');
+      fetchData();
+    } catch {
+      showToast('Failed to acknowledge policy.', 'error');
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-5 animate-pulse">
@@ -136,7 +146,7 @@ export default function Governance() {
                   <tr>
                     <th>Title</th>
                     <th>Category</th>
-                    <th>Effective Date</th>
+                    <th>Created Date</th>
                     <th>Requires Acknowledgement</th>
                     <th>Status</th>
                   </tr>
@@ -147,13 +157,22 @@ export default function Governance() {
                       <td className="font-medium">{p.title}</td>
                       <td className="text-[var(--text-secondary)]">{p.category || '—'}</td>
                       <td className="text-[var(--text-secondary)]">
-                        {p.effective_date ? new Date(p.effective_date).toLocaleDateString() : '—'}
+                        {p.created_at ? new Date(p.created_at).toLocaleDateString() : '—'}
                       </td>
                       <td>
                         {p.requires_acknowledgement ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                            ✓ Required
-                          </span>
+                          p.is_acknowledged ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                              ✓ Acknowledged
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleAcknowledge(p.id)}
+                              className="px-3 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-semibold rounded-md border border-amber-300 transition-colors"
+                            >
+                              Acknowledge
+                            </button>
+                          )
                         ) : (
                           <span className="text-xs text-[var(--text-secondary)]">Not required</span>
                         )}

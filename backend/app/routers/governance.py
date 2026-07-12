@@ -6,7 +6,7 @@ from datetime import datetime, date
 import uuid
 
 from app.database import get_db
-from app.models import ESGPolicy, Audit, ComplianceIssue, Employee, Department
+from app.models import ESGPolicy, Audit, ComplianceIssue, Employee, Department, PolicyAcknowledgement
 from app.services.security import get_current_user
 
 router = APIRouter(prefix="/governance", tags=["governance"])
@@ -17,6 +17,8 @@ class ESGPolicyResponse(BaseModel):
     category: str
     status: str
     requires_acknowledgement: bool
+    is_acknowledged: bool = False
+    created_at: datetime
     
     class Config:
         from_attributes = True
@@ -43,8 +45,26 @@ class ComplianceIssueStatusUpdate(BaseModel):
     status: str
 
 @router.get("/policies", response_model=List[ESGPolicyResponse])
-def get_policies(db: Session = Depends(get_db)):
-    return db.query(ESGPolicy).all()
+def get_policies(db: Session = Depends(get_db), current_user: Employee = Depends(get_current_user)):
+    policies = db.query(ESGPolicy).all()
+    acks = db.query(PolicyAcknowledgement).filter(
+        PolicyAcknowledgement.employee_id == current_user.id,
+        PolicyAcknowledgement.acknowledged_at.isnot(None)
+    ).all()
+    ack_policy_ids = {ack.policy_id for ack in acks}
+    
+    results = []
+    for p in policies:
+        results.append(ESGPolicyResponse(
+            id=p.id,
+            title=p.title,
+            category=p.category,
+            status=p.status,
+            requires_acknowledgement=p.requires_acknowledgement,
+            is_acknowledged=(p.id in ack_policy_ids),
+            created_at=p.created_at
+        ))
+    return results
 
 @router.get("/audits", response_model=List[AuditResponse])
 def get_audits(db: Session = Depends(get_db)):
@@ -119,3 +139,37 @@ def update_compliance_issue_status(
         is_overdue=is_overdue,
         owner_name=emps.get(issue.owner_employee_id)
     )
+
+@router.post("/policies/{id}/acknowledge")
+def acknowledge_policy(
+    id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: Employee = Depends(get_current_user)
+):
+    policy = db.query(ESGPolicy).filter(ESGPolicy.id == id).first()
+    if not policy:
+        raise HTTPException(status_code=404, detail="Policy not found")
+        
+    if not policy.requires_acknowledgement:
+        raise HTTPException(status_code=400, detail="Policy does not require acknowledgement")
+
+    existing = db.query(PolicyAcknowledgement).filter(
+        PolicyAcknowledgement.policy_id == id,
+        PolicyAcknowledgement.employee_id == current_user.id
+    ).first()
+    
+    if existing and existing.acknowledged_at:
+        raise HTTPException(status_code=400, detail="Already acknowledged")
+
+    if not existing:
+        ack = PolicyAcknowledgement(
+            policy_id=id,
+            employee_id=current_user.id,
+            acknowledged_at=datetime.utcnow()
+        )
+        db.add(ack)
+    else:
+        existing.acknowledged_at = datetime.utcnow()
+
+    db.commit()
+    return {"message": "Policy acknowledged successfully"}

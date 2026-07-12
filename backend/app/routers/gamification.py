@@ -14,6 +14,7 @@ from app.models import (
 from app.services.security import require_role
 from app.services.badge_engine import check_and_award_badges
 from app.services.security import get_current_user
+from app.services.notification_engine import notify_challenge_approval, notify_csr_approval
 
 router = APIRouter(prefix="/gamification", tags=["gamification"])
 
@@ -141,6 +142,8 @@ def approve_challenge_participation(
     db.commit() # Commit first so badge engine sees the updated counts
     db.refresh(employee)
     
+    notify_challenge_approval(db, employee.id, challenge.title, challenge.xp_value)
+    
     new_badges = check_and_award_badges(db, employee)
     db.commit()
     
@@ -178,6 +181,10 @@ def approve_csr_participation(
     
     db.commit()
     db.refresh(employee)
+    
+    activity = db.query(CSRActivity).filter(CSRActivity.id == participation.csr_activity_id).first()
+    if activity:
+        notify_csr_approval(db, employee.id, activity.title, pts)
     
     new_badges = check_and_award_badges(db, employee)
     db.commit()

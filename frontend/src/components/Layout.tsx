@@ -12,7 +12,11 @@ const NotificationBell = () => {
   const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
 
-  useEffect(() => { fetchNotifications(); }, []);
+  useEffect(() => {
+    if (localStorage.getItem('token')) {
+      fetchNotifications();
+    }
+  }, []);
 
   const fetchNotifications = async () => {
     try {
@@ -245,8 +249,14 @@ const ToastProvider = ({ children }) => {
 export const Layout = () => {
   const [user, setUser] = useState(null);
   const [orgScore, setOrgScore] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    if (!localStorage.getItem('token')) {
+      navigate('/login');
+      return;
+    }
+
     const fetchUser = async () => {
       try {
         const res = await api.get('/auth/me');

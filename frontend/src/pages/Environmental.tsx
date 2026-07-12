@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../lib/api';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -477,6 +477,88 @@ const LogCarbonForm: React.FC<LogFormProps> = ({
   );
 };
 
+// ── ERP Simulator Form ──────────────────────────────────────────────────────
+
+const ERPSimulatorForm: React.FC<{
+  departments: Department[];
+  onSuccess: () => void;
+  onClose: () => void;
+}> = ({ departments, onSuccess, onClose }) => {
+  const [departmentId, setDepartmentId] = useState('');
+  const [activityType, setActivityType] = useState('Purchase');
+  const [amount, setAmount] = useState('');
+  const [description, setDescription] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError('');
+    if (!departmentId || !activityType || !amount || !description) {
+      setFormError('All fields are required.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await api.post('/erp/simulate-transaction', {
+        department_id: departmentId,
+        activity_type: activityType,
+        amount: Number(amount),
+        description: description,
+      });
+      alert(res.data.message);
+      onSuccess();
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail ?? 'Failed to simulate ERP transaction.';
+      setFormError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--accent-overall)', borderRadius: '12px', padding: '24px', marginBottom: '20px', animation: 'slideDown 0.25s ease' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: 'var(--accent-overall)' }}>Simulate ERP Transaction</h3>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', color: 'var(--text-secondary)' }}>×</button>
+      </div>
+      {formError && <div style={{ padding: '12px', background: '#FEF2F2', color: '#DC2626', marginBottom: '16px', borderRadius: '8px' }}>{formError}</div>}
+      <form onSubmit={handleSubmit}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div>
+            <label className="form-label">Department</label>
+            <select className="form-input" value={departmentId} onChange={e => setDepartmentId(e.target.value)} required>
+              <option value="">Select department…</option>
+              {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="form-label">Activity Type</label>
+            <select className="form-input" value={activityType} onChange={e => setActivityType(e.target.value)} required>
+              <option value="Purchase">Purchase</option>
+              <option value="Manufacturing">Manufacturing</option>
+              <option value="Expense">Expense</option>
+              <option value="Fleet">Fleet</option>
+            </select>
+          </div>
+          <div>
+            <label className="form-label">Amount</label>
+            <input type="number" step="any" min="1" className="form-input" value={amount} onChange={e => setAmount(e.target.value)} required />
+          </div>
+          <div>
+            <label className="form-label">Description</label>
+            <input type="text" className="form-input" value={description} onChange={e => setDescription(e.target.value)} required />
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '12px', marginTop: '20px', justifyContent: 'flex-end' }}>
+          <button type="button" onClick={onClose} style={{ padding: '9px 18px', border: '1px solid var(--border)', background: 'transparent', borderRadius: '8px', cursor: 'pointer' }}>Cancel</button>
+          <button type="submit" disabled={submitting} style={{ padding: '9px 22px', background: 'var(--accent-overall)', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>{submitting ? 'Simulating...' : 'Simulate ERP'}</button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
 // ── Carbon Transactions Tab ───────────────────────────────────────────────────
 
 const CarbonTransactionsTab: React.FC = () => {
@@ -486,6 +568,7 @@ const CarbonTransactionsTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [showErpForm, setShowErpForm] = useState(false);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -512,6 +595,7 @@ const CarbonTransactionsTab: React.FC = () => {
 
   const handleSuccess = () => {
     setShowForm(false);
+    setShowErpForm(false);
     fetchAll();
   };
 
@@ -535,28 +619,53 @@ const CarbonTransactionsTab: React.FC = () => {
             Logged operational activities and their CO₂ equivalents
           </p>
         </div>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '9px 18px',
-            background: 'var(--accent-environmental)',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            color: '#fff',
-            fontWeight: 600,
-            boxShadow: '0 2px 8px rgba(46,158,91,0.3)',
-            transition: 'opacity 0.15s ease',
-          }}
-        >
-          <span style={{ fontSize: '18px', lineHeight: 1 }}>+</span>
-          Log Carbon Data
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={() => { setShowErpForm((v) => !v); setShowForm(false); }}
+            style={{
+              padding: '9px 18px',
+              background: 'var(--accent-overall)',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              color: '#fff',
+              fontWeight: 600,
+              boxShadow: '0 2px 8px rgba(99,102,241,0.3)'
+            }}
+          >
+            Simulate ERP
+          </button>
+          <button
+            onClick={() => { setShowForm((v) => !v); setShowErpForm(false); }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '9px 18px',
+              background: 'var(--accent-environmental)',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              color: '#fff',
+              fontWeight: 600,
+              boxShadow: '0 2px 8px rgba(46,158,91,0.3)',
+            }}
+          >
+            <span style={{ fontSize: '18px', lineHeight: 1 }}>+</span>
+            Log Carbon Data
+          </button>
+        </div>
       </div>
+
+      {showErpForm && (
+        <ERPSimulatorForm
+          departments={departments}
+          onSuccess={handleSuccess}
+          onClose={() => setShowErpForm(false)}
+        />
+      )}
 
       {showForm && (
         <LogCarbonForm

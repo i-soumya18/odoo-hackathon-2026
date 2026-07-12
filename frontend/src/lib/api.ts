@@ -21,8 +21,8 @@ api.interceptors.response.use(
       localStorage.removeItem('token');
       localStorage.removeItem('userRole');
       // Redirect to login if not already there
-      if (window.location.pathname !== '/') {
-        window.location.href = '/';
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
       }
     }
     return Promise.reject(error);
