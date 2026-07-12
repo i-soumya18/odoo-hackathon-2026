@@ -8,7 +8,7 @@ import Social from './pages/Social';
 import Governance from './pages/Governance';
 import Gamification from './pages/Gamification';
 import Reports from './pages/Reports';
-import AICopilot from './pages/AICopilot';
+import Copilot from './pages/Copilot';
 import Settings from './pages/Settings';
 
 function App() {
@@ -24,7 +24,7 @@ function App() {
           <Route path="governance" element={<Governance />} />
           <Route path="gamification" element={<Gamification />} />
           <Route path="reports" element={<Reports />} />
-          <Route path="copilot" element={<AICopilot />} />
+          <Route path="copilot" element={<Copilot />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>

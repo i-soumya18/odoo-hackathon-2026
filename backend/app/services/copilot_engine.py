@@ -186,7 +186,7 @@ class CopilotEngine:
         
     def _sync_call_gemini(self, message: str, session_history: List[dict] = None) -> Dict[str, Any]:
         chat = self.client.chats.create(
-            model="gemini-2.5-flash",
+            model="gemini-2.5-flash-lite",
             config=types.GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
                 tools=self._get_tools_definition(),
