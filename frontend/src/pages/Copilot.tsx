@@ -70,14 +70,19 @@ export default function Copilot() {
   return (
     <div className="max-w-4xl mx-auto h-[calc(100vh-8rem)] flex flex-col bg-white rounded-xl shadow-sm border border-[var(--border)] overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-[var(--border)] flex items-center justify-between bg-[var(--surface-alt)]">
-        <div className="flex items-center space-x-2 text-[var(--brand-primary)]">
-          <Bot size={24} />
-          <h2 className="font-semibold text-lg text-[var(--text-primary)]">EcoSphere Copilot</h2>
+      <div className="p-4 border-b border-[var(--border)] flex items-center justify-between bg-white">
+        <div className="flex items-center space-x-3">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #714B67, #0EA5E9)' }}>
+            <Bot size={18} className="text-white" />
+          </div>
+          <div>
+            <h2 className="font-bold text-[var(--text-primary)] text-base leading-tight">EcoSphere Copilot</h2>
+            <p className="text-[10px] text-[var(--text-secondary)] font-medium">Powered by Gemini · Grounded in live ESG data</p>
+          </div>
         </div>
-        <div className="text-xs text-[var(--text-secondary)] flex items-center space-x-1">
-          <AlertCircle size={14} />
-          <span>Grounded in your live ESG data</span>
+        <div className="flex items-center gap-2 text-[11px] font-semibold px-3 py-1.5 rounded-full border border-[var(--border)] text-[var(--text-secondary)] bg-[var(--surface-alt)]">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block"></span>
+          Live data
         </div>
       </div>
 
@@ -99,7 +104,7 @@ export default function Copilot() {
                   onClick={() => sendMessage(chip)}
                   className="text-left px-4 py-3 rounded-lg border border-[var(--border)] hover:border-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/5 transition-colors text-sm text-[var(--text-secondary)] hover:text-[var(--brand-primary)]"
                 >
-                  "{chip}"
+                  {chip}
                 </button>
               ))}
             </div>

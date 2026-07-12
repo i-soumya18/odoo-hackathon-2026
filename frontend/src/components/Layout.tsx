@@ -1,147 +1,279 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Leaf, Users, ShieldCheck, Trophy, FileText, Settings as SettingsIcon, Bot, Bell, Check } from 'lucide-react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import {
+  LayoutDashboard, Leaf, Users, ShieldCheck, Trophy, FileText,
+  Settings as SettingsIcon, Bot, Bell, Check, ChevronRight,
+  LogOut, Zap, X
+} from 'lucide-react';
 import api from '../lib/api';
 
+/* ─── Notification Bell ─────────────────────────────────────── */
 const NotificationBell = () => {
   const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
+  useEffect(() => { fetchNotifications(); }, []);
 
   const fetchNotifications = async () => {
     try {
       const res = await api.get('/notifications');
       setNotifications(res.data);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch { /* silent */ }
   };
 
   const markAsRead = async (id) => {
     try {
       await api.post(`/notifications/${id}/read`);
       fetchNotifications();
-    } catch (err) {
-      console.error(err);
-    }
+    } catch { /* silent */ }
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <div className="relative">
-      <button 
+      <button
         onClick={() => setOpen(!open)}
-        className="p-2 text-[var(--text-secondary)] hover:text-[var(--brand-primary)] hover:bg-[var(--surface-alt)] rounded-full transition-colors relative"
+        className="relative p-2 text-[var(--text-secondary)] hover:text-[var(--brand-primary)] hover:bg-[var(--surface-alt)] rounded-full transition-colors"
+        aria-label="Notifications"
       >
-        <Bell size={20} />
-        {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-        )}
+        <Bell size={18} />
+        {unreadCount > 0 && <span className="notif-dot" />}
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 bg-white border border-[var(--border)] rounded-xl shadow-lg z-50 overflow-hidden">
-          <div className="px-4 py-3 border-b border-[var(--border)] flex justify-between items-center bg-[var(--surface-alt)]">
-            <h3 className="font-semibold text-sm">Notifications</h3>
-            <span className="text-xs text-[var(--text-secondary)]">{unreadCount} unread</span>
-          </div>
-          <div className="max-h-80 overflow-y-auto divide-y divide-[var(--border)]">
-            {notifications.length === 0 ? (
-              <div className="p-4 text-center text-sm text-[var(--text-secondary)]">No notifications.</div>
-            ) : notifications.map(n => (
-              <div key={n.id} className={`p-4 text-sm flex gap-3 ${!n.read ? 'bg-blue-50/50' : ''}`}>
-                <div className="flex-1">
-                  <p className={`text-[var(--text-primary)] ${!n.read ? 'font-medium' : ''}`}>{n.message}</p>
-                  <p className="text-xs text-[var(--text-secondary)] mt-1">{new Date(n.created_at).toLocaleString()}</p>
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 mt-2 w-80 bg-white border border-[var(--border)] rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in-up">
+            <div className="px-4 py-3 border-b border-[var(--border)] flex justify-between items-center bg-[var(--surface-alt)]">
+              <h3 className="font-semibold text-sm text-[var(--text-primary)]">Notifications</h3>
+              <span className="text-xs text-[var(--text-secondary)] bg-white border border-[var(--border)] px-2 py-0.5 rounded-full">
+                {unreadCount} unread
+              </span>
+            </div>
+            <div className="max-h-80 overflow-y-auto divide-y divide-[var(--border)]">
+              {notifications.length === 0 ? (
+                <div className="p-6 text-center text-sm text-[var(--text-secondary)]">
+                  <Bell size={24} className="mx-auto mb-2 opacity-30" />
+                  All caught up!
                 </div>
-                {!n.read && (
-                  <button 
-                    onClick={() => markAsRead(n.id)}
-                    className="text-[var(--brand-primary)] hover:text-blue-700 p-1 h-fit rounded-full hover:bg-blue-100 transition-colors"
-                    title="Mark as read"
-                  >
-                    <Check size={16} />
-                  </button>
-                )}
-              </div>
-            ))}
+              ) : notifications.map(n => (
+                <div key={n.id} className={`p-4 text-sm flex gap-3 transition-colors ${!n.read ? 'bg-blue-50/40' : 'hover:bg-[var(--surface-alt)]'}`}>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-[var(--text-primary)] leading-snug ${!n.read ? 'font-medium' : ''}`}>{n.message}</p>
+                    <p className="text-xs text-[var(--text-secondary)] mt-1">
+                      {new Date(n.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                  {!n.read && (
+                    <button
+                      onClick={() => markAsRead(n.id)}
+                      className="shrink-0 p-1 text-[var(--brand-primary)] hover:bg-blue-100 rounded-full transition-colors"
+                      title="Mark as read"
+                    >
+                      <Check size={14} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
 };
 
-const Sidebar = () => {
-  const navItems = [
-    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/environmental', label: 'Environmental', icon: Leaf },
-    { to: '/social', label: 'Social', icon: Users },
-    { to: '/governance', label: 'Governance', icon: ShieldCheck },
-    { to: '/gamification', label: 'Gamification', icon: Trophy },
-    { to: '/reports', label: 'Reports', icon: FileText },
-    { to: '/copilot', label: 'AI Copilot', icon: Bot },
-    { to: '/settings', label: 'Settings', icon: SettingsIcon },
-  ];
+/* ─── Nav Item ───────────────────────────────────────────────── */
+const NAV_ITEMS = [
+  { to: '/dashboard',     label: 'Dashboard',     icon: LayoutDashboard, color: 'var(--brand-primary)' },
+  { to: '/environmental', label: 'Environmental',  icon: Leaf,            color: 'var(--accent-environmental)' },
+  { to: '/social',        label: 'Social',         icon: Users,           color: 'var(--accent-social)' },
+  { to: '/governance',    label: 'Governance',     icon: ShieldCheck,     color: 'var(--accent-governance)' },
+  { to: '/gamification',  label: 'Gamification',   icon: Trophy,          color: 'var(--accent-xp)' },
+  { to: '/reports',       label: 'Reports',        icon: FileText,        color: 'var(--text-secondary)' },
+  { to: '/copilot',       label: 'AI Copilot',     icon: Bot,             color: 'var(--accent-overall)' },
+  { to: '/settings',      label: 'Settings',       icon: SettingsIcon,    color: 'var(--text-secondary)' },
+];
+
+/* ─── Sidebar ────────────────────────────────────────────────── */
+const Sidebar = ({ user }) => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    navigate('/');
+  };
 
   return (
-    <div className="w-64 bg-surface border-r border-border flex flex-col h-screen">
-      <div className="p-6 border-b border-border">
-        <h2 className="text-xl font-bold text-brand-primary">EcoSphere</h2>
+    <div className="w-60 flex flex-col h-screen bg-white border-r border-[var(--border)] shrink-0" style={{ boxShadow: '1px 0 0 var(--border)' }}>
+      {/* Logo */}
+      <div className="px-5 py-5 border-b border-[var(--border)]">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #714B67, #5C3B54)' }}>
+            <Leaf size={16} className="text-white" />
+          </div>
+          <div>
+            <span className="text-[15px] font-bold" style={{ color: 'var(--brand-primary)' }}>EcoSphere</span>
+            <p className="text-[10px] text-[var(--text-secondary)] font-medium tracking-wide leading-tight">ESG Operating System</p>
+          </div>
+        </div>
       </div>
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
+
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        {NAV_ITEMS.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
-              `flex items-center space-x-3 px-3 py-2 rounded-md transition-colors ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all group ${
                 isActive
-                  ? 'bg-brand-primary text-white'
-                  : 'text-text-secondary hover:bg-surface-alt hover:text-text-primary'
+                  ? 'bg-[var(--brand-primary)] text-white shadow-sm'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--surface-alt)] hover:text-[var(--text-primary)]'
               }`
             }
           >
-            <item.icon size={20} />
-            <span className="font-medium">{item.label}</span>
+            {({ isActive }) => (
+              <>
+                <item.icon
+                  size={16}
+                  style={{ color: isActive ? 'white' : item.color }}
+                  className="shrink-0"
+                />
+                <span>{item.label}</span>
+                {item.to === '/copilot' && !isActive && (
+                  <span className="ml-auto text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 bg-[var(--accent-overall)] text-white rounded-full">AI</span>
+                )}
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
-    </div>
-  );
-};
 
-const Topbar = () => {
-  return (
-    <div className="h-16 bg-surface border-b border-border flex items-center justify-between px-6 shadow-sm">
-      <div className="flex-1"></div>
-      <div className="flex items-center space-x-4">
-        <NotificationBell />
-        <NavLink to="/copilot" className="p-2 text-brand-primary hover:bg-surface-alt rounded-full transition-colors" title="AI Copilot">
-          <Bot size={20} />
-        </NavLink>
-        <div className="w-8 h-8 rounded-full bg-brand-primary text-white flex items-center justify-center font-bold">
-          U
+      {/* User Footer */}
+      <div className="border-t border-[var(--border)] p-3">
+        <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-[var(--surface-alt)] transition-colors group cursor-pointer">
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+            style={{ background: 'linear-gradient(135deg, #714B67, #5C3B54)' }}
+          >
+            {user?.name ? user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : 'AD'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[12px] font-semibold text-[var(--text-primary)] truncate">{user?.name || 'Admin User'}</p>
+            <p className="text-[10px] text-[var(--text-secondary)] truncate">{user?.email || ''}</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            title="Logout"
+            className="shrink-0 p-1 text-[var(--text-secondary)] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+          >
+            <LogOut size={14} />
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-export const Layout = () => {
+/* ─── Topbar ─────────────────────────────────────────────────── */
+const Topbar = ({ orgScore }) => {
   return (
-    <div className="flex h-screen bg-bg-base overflow-hidden">
-      <Sidebar />
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <Topbar />
-        <main className="flex-1 overflow-y-auto p-6">
-          <Outlet />
-        </main>
+    <div className="h-14 bg-white border-b border-[var(--border)] flex items-center justify-between px-6 shrink-0" style={{ boxShadow: '0 1px 0 var(--border)' }}>
+      {/* Left: org score chip */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 bg-[var(--surface-alt)] border border-[var(--border)] rounded-lg px-3 py-1.5">
+          <Zap size={13} className="text-[var(--accent-overall)]" />
+          <span className="text-xs text-[var(--text-secondary)] font-medium">Overall ESG</span>
+          <span className="text-sm font-bold score-num" style={{ color: 'var(--accent-overall)' }}>
+            {orgScore !== null ? orgScore.toFixed(1) : '—'}
+          </span>
+        </div>
+      </div>
+
+      {/* Right: actions */}
+      <div className="flex items-center gap-2">
+        <NotificationBell />
+        <NavLink
+          to="/copilot"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:bg-[var(--surface-alt)]"
+          style={{ color: 'var(--accent-overall)' }}
+          title="Open AI Copilot"
+        >
+          <Bot size={15} />
+          <span className="hidden md:inline">Copilot</span>
+        </NavLink>
       </div>
     </div>
+  );
+};
+
+/* ─── Toast ──────────────────────────────────────────────────── */
+export const ToastContext = React.createContext({ show: (_msg: string, _type?: string) => {} });
+const ToastProvider = ({ children }) => {
+  const [toasts, setToasts] = useState([]);
+  const show = (msg, type = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, msg, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+  };
+  return (
+    <ToastContext.Provider value={{ show }}>
+      {children}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2">
+        {toasts.map(t => (
+          <div
+            key={t.id}
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium animate-fade-in-up border ${
+              t.type === 'success' ? 'bg-white border-green-200 text-green-800' :
+              t.type === 'error' ? 'bg-white border-red-200 text-red-800' :
+              'bg-white border-[var(--border)] text-[var(--text-primary)]'
+            }`}
+          >
+            {t.type === 'success' ? <Check size={15} className="text-green-600" /> : <X size={15} className="text-red-500" />}
+            {t.msg}
+          </div>
+        ))}
+      </div>
+    </ToastContext.Provider>
+  );
+};
+
+/* ─── Layout Root ────────────────────────────────────────────── */
+export const Layout = () => {
+  const [user, setUser] = useState(null);
+  const [orgScore, setOrgScore] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await api.get('/auth/me');
+        setUser(res.data);
+      } catch { /* silent */ }
+    };
+    const fetchOrgScore = async () => {
+      try {
+        const res = await api.get('/scores/organization');
+        setOrgScore(res.data.total_score);
+      } catch { /* silent */ }
+    };
+    fetchUser();
+    fetchOrgScore();
+  }, []);
+
+  return (
+    <ToastProvider>
+      <div className="flex h-screen bg-[var(--bg-base)] overflow-hidden">
+        <Sidebar user={user} />
+        <div className="flex flex-col flex-1 overflow-hidden min-w-0">
+          <Topbar orgScore={orgScore} />
+          <main className="flex-1 overflow-y-auto p-6">
+            <Outlet />
+          </main>
+        </div>
+      </div>
+    </ToastProvider>
   );
 };
