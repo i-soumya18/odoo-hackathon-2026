@@ -9,16 +9,47 @@ from pydantic import BaseModel
 from app.database import get_db
 from app.models import (
     Challenge, ChallengeParticipation, CSRActivity, EmployeeParticipation,
-    Reward, Employee, Organization, Department
+    Reward, Employee, Organization, Department, Badge, EmployeeBadge
 )
 from app.services.security import require_role
 from app.services.badge_engine import check_and_award_badges
 from app.services.security import get_current_user
 
-router = APIRouter(tags=["gamification"])
+router = APIRouter(prefix="/gamification", tags=["gamification"])
 
 class StatusUpdate(BaseModel):
     status: str
+
+@router.get("/challenges")
+def get_challenges(db: Session = Depends(get_db)):
+    return db.query(Challenge).order_by(Challenge.deadline.asc()).all()
+
+@router.get("/participations")
+def get_participations(db: Session = Depends(get_db)):
+    # Returns all pending participations for admin/manager view
+    parts = db.query(ChallengeParticipation).filter(ChallengeParticipation.approval_status == 'Pending').all()
+    # Join with employee and challenge
+    results = []
+    emps = {e.id: e.name for e in db.query(Employee).all()}
+    chals = {c.id: c.title for c in db.query(Challenge).all()}
+    for p in parts:
+        results.append({
+            "id": p.id,
+            "employee_name": emps.get(p.employee_id),
+            "challenge_title": chals.get(p.challenge_id),
+            "approval_status": p.approval_status
+        })
+    return results
+
+@router.get("/my-badges")
+def get_my_badges(db: Session = Depends(get_db), current_user: Employee = Depends(get_current_user)):
+    ebs = db.query(EmployeeBadge).filter(EmployeeBadge.employee_id == current_user.id).all()
+    badge_ids = [eb.badge_id for eb in ebs]
+    return db.query(Badge).filter(Badge.id.in_(badge_ids)).all() if badge_ids else []
+
+@router.get("/rewards")
+def get_rewards(db: Session = Depends(get_db)):
+    return db.query(Reward).all()
 
 @router.patch("/challenges/{challenge_id}/status")
 def update_challenge_status(

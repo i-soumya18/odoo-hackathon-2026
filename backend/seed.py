@@ -64,22 +64,23 @@ def seed_db():
     db.commit()
 
     print("Seeding Employees...")
+    from app.services.security import get_password_hash
     # Admin
-    admin = Employee(name="System Admin", email="admin@demo.org", password_hash="hash", department_id=depts[3].id, role="Admin")
+    admin = Employee(name="System Admin", email="admin@demo.org", password_hash=get_password_hash("adminpass"), department_id=depts[3].id, role="Admin")
     # Managers
-    m_nair = Employee(name="S. Nair", email="snair@demo.org", password_hash="hash", department_id=depts[1].id, role="Manager")
-    m_iyer = Employee(name="R. Iyer", email="riyer@demo.org", password_hash="hash", department_id=depts[3].id, role="Manager")
-    m_sal = Employee(name="Sales Lead", email="slead@demo.org", password_hash="hash", department_id=depts[0].id, role="Manager")
-    m_log = Employee(name="Log Lead", email="llead@demo.org", password_hash="hash", department_id=depts[2].id, role="Manager")
+    m_nair = Employee(name="S. Nair", email="snair@demo.org", password_hash=get_password_hash("managerpass"), department_id=depts[1].id, role="Manager")
+    m_iyer = Employee(name="R. Iyer", email="riyer@demo.org", password_hash=get_password_hash("managerpass"), department_id=depts[3].id, role="Manager")
+    m_sal = Employee(name="Sales Lead", email="slead@demo.org", password_hash=get_password_hash("managerpass"), department_id=depts[0].id, role="Manager")
+    m_log = Employee(name="Log Lead", email="llead@demo.org", password_hash=get_password_hash("managerpass"), department_id=depts[2].id, role="Manager")
     
     # Regular Employees
-    e_priya = Employee(name="Priya", email="priya@demo.org", password_hash="hash", department_id=depts[4].id, role="Employee", total_xp=500, total_points=200)
-    e_aditi = Employee(name="Aditi Rao", email="aditi@demo.org", password_hash="hash", department_id=depts[4].id, role="Employee", total_xp=3505, total_points=1200)
-    e_karan = Employee(name="Karan Shah", email="karan@demo.org", password_hash="hash", department_id=depts[0].id, role="Employee", total_xp=2100, total_points=500)
+    e_priya = Employee(name="Priya", email="priya@demo.org", password_hash=get_password_hash("employeepass"), department_id=depts[4].id, role="Employee", total_xp=500, total_points=200)
+    e_aditi = Employee(name="Aditi Rao", email="aditi@demo.org", password_hash=get_password_hash("employeepass"), department_id=depts[4].id, role="Employee", total_xp=3505, total_points=1200)
+    e_karan = Employee(name="Karan Shah", email="karan@demo.org", password_hash=get_password_hash("employeepass"), department_id=depts[0].id, role="Employee", total_xp=2100, total_points=500)
     
     employees = [admin, m_nair, m_iyer, m_sal, m_log, e_priya, e_aditi, e_karan]
     for i in range(7):
-        employees.append(Employee(name=f"Emp {i+1}", email=f"emp{i+1}@demo.org", password_hash="hash", department_id=random.choice(depts).id, role="Employee", total_xp=random.randint(100, 1000)))
+        employees.append(Employee(name=f"Emp {i+1}", email=f"emp{i+1}@demo.org", password_hash=get_password_hash("employeepass"), department_id=random.choice(depts).id, role="Employee", total_xp=random.randint(100, 1000)))
     db.add_all(employees)
     db.commit()
 
